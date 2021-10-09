@@ -1,36 +1,63 @@
 #include <iostream>
 #include <thread>
-using namespace std;
+#include <math.h>
+#include <iomanip>
+#include <vector>
 
-void foo(int Z)
+# define MAX_THREADS		4
+# define INTEGRAL_TOP		1
+# define INTEGRAL_BOTTOM	0
+
+static int	id;
+double		pi_parts[MAX_THREADS];
+
+double formula(double x)
 {
-	cout << "Thread using function pointer as callable\n";
+	return (4 * atan(x));
 }
 
-class thread_obj {
-public:
-	void operator()(int x)
+double singlethread_pi()
+{
+	return (formula(INTEGRAL_TOP) - formula(INTEGRAL_BOTTOM));
+}
+
+void	iterate_pi(void)
+{
+	static double	start;
+	static double	end;
+
+	start = (double)id * (INTEGRAL_TOP - INTEGRAL_BOTTOM) / MAX_THREADS;
+	end = (double)(id + 1) * (INTEGRAL_TOP - INTEGRAL_BOTTOM) / MAX_THREADS;
+	pi_parts[id] = formula(end) - formula(start);
+	id++;
+}
+
+double multithread_pi(void)
+{
+	int							i;
+	double						result;
+	std::vector< std::thread >	threads_vec;
+
+	i = 0;
+	result = 0.0;
+	while (i < MAX_THREADS)
 	{
-		for (int i = 0; i < x; i++)
-			cout << "Thread using function object as callable\n";
+		threads_vec.push_back(std::move(std::thread(iterate_pi)));
+		threads_vec[i].join();
+		i++;
 	}
-};
+	i = 0;
+	while (i < MAX_THREADS)
+	{			
+		result += pi_parts[i];
+		i++;
+	}
+	return (result);
+}
 
 int main()
 {
-	thread th1(foo, 3);
-	thread th2(thread_obj(), 3);
-
-	auto f = [](int x) {
-		for (int i = 0; i < x; i++)
-			cout << "Thread using lambda expression as callable\n";
-	};
-
-	thread th3(f, 3);
-
-	th1.join();
-	th2.join();
-	th3.join();
-
-	return 0;
+	std::cout << std::setprecision(10) << "Singlethread Pi = " << singlethread_pi() << std::endl;
+	std::cout << "Multithread  Pi = " << multithread_pi() << std::endl;
+	return (0);
 }
