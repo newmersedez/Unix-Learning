@@ -4,7 +4,7 @@
 #include <math.h>
 #include <pthread.h>
 
-# define MAX_THREADS		4
+# define MAX_THREADS		16
 # define INTEGRAL_TOP		1
 # define INTEGRAL_BOTTOM	0
 
